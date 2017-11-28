@@ -20,8 +20,8 @@ book = Spreadsheet::Workbook.new
 
   #Create worksheet for student
   sheet = book.create_worksheet
-#tmp = Array.new
- index = 0
+
+  index = 0
   sheet.row(0).push "id", "title"
 
   quiz_list.each do |x|
