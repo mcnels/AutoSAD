@@ -2,6 +2,8 @@
 require 'canvas-api'
 require 'json'
 require 'axlsx'
+require 'date'
+require 'time'
 
 # Check for command line arguments
 if (ARGV.length <= 0)
@@ -28,12 +30,15 @@ end
 submissions_list.each do |submission|
   user_id = submission['user_id'].to_s
   puts user_id
-  start_time1 = submission['started_at']
-  #start_time1["Z"] = ""
-  #start_time = start_time1+"-01:00"
-  end_time = submission['finished_at']
-
-  #end_time = DateTime.now.strftime("%Y-%m-%dT%H:%M:00-05:00")
+  
+  # Set start time for page views to 1 hour before test start time
+  start_time1 = submission['started_at'].to_s
+  start = DateTime.parse(start_time1)
+  start_time = start - (1/24.0)
+  # Set end time for page views to 1 hour after test submission time
+  end_time1 = submission['finished_at'].to_s
+  endt = DateTime.parse(end_time1)
+  end_time = endt + (1/24.0)
 
   # Get page views activity for each student who submitted a quiz
   page_views = canvas.get("/api/v1/users/" + user_id + "/page_views?", {'start_time'=> start_time, 'end_time' => end_time, 'per_page' => '100'})
