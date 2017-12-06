@@ -18,6 +18,11 @@ course_id = ARGV[0]
 
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
 
+
+# Get all students
+list_student = canvas.get("/api/v1/courses/" + course_id + "/users?", {'enrollment_type[]' => 'student'})
+students = Array.new(list_student)
+
 # Create workbook for student
 p = Axlsx::Package.new
 
@@ -29,8 +34,14 @@ end
 
 submissions_list.each do |submission|
   user_id = submission['user_id'].to_s
-  puts user_id
-  
+  sheetname = ""
+  students.each do |student|
+    if user_id == student['id'].to_s
+      sheetname = student['sortable_name']
+    end
+  end
+  puts sheetname+" started"
+
   # Set start time for page views to 1 hour before test start time
   start_time1 = submission['started_at'].to_s
   start = DateTime.parse(start_time1)
@@ -62,8 +73,8 @@ submissions_list.each do |submission|
     end
 
     # rename sheet
-    puts user_id+" done"
-    sheet.name = user_id
+    puts sheetname+" done"
+    sheet.name = sheetname
   end
 
   # Create the Excel document
