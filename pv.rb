@@ -45,9 +45,11 @@ quiz_list.each do |x|
           submissions_list.next_page!
       end
 
+      submissions = Array.new(submissions_list)
+
       submissions_list.each do |submission|
         user_id = submission['user_id'].to_s
-        # sheetname = ""
+        sheetname = ""
 
         # Set start time for page views to 1 hour before test start time
         start_time1 = submission['started_at'].to_s
@@ -58,27 +60,40 @@ quiz_list.each do |x|
         end_time1 = submission['finished_at'].to_s
         endt = DateTime.parse(end_time1)
         end_time = endt + (1/24.0)
-        # puts end_time
+
         # Compare submission time and period_start
         startperiod = DateTime.parse(period_start)
 
-        if start >= startperiod
+        if endt >= startperiod
           puts startperiod
-          # student name for this submission
+          sheetnames = Array.new
+          # determine name for the different sheets in the excel file
           students.each do |student|
-            puts user_id.to_s
-            puts "students loop"
-            # puts student['id'].to_s
-            if user_id == student['id']
-              puts student['id']
-              puts "Compare"
-              sheetname = student['sortable_name'].to_s
-              puts sheetname
+            if user_id == student['id'].to_s
+              sheetname = student['sortable_name']
               # save all sheetnames in an array
-              sheetnames = Array.new(sheetname)
+              sheetnames.push(sheetname)
             end
           end
           puts sheetname+" started"
+
+          # submissions.each do |subm|
+          #   user_id1 = subm['user_id'].to_s
+          #   puts user_id1
+          #
+          #   students.each do |student|
+          #       puts student['id']
+          #       if user_id1 == student['id'].to_s
+          #         sheetname = student['sortable_name'].to_s
+          #         puts sheetname
+          #         # save all sheetnames in an array
+          #         sheetnames = Array.new(sheetname)
+          #       end
+          #   end
+          # end
+          #
+          #
+          # puts sheetname+" started"
 
           # Get page views activity for each student who submitted a quiz
           page_views = canvas.get("/api/v1/users/" + user_id + "/page_views?", {'start_time'=> start_time, 'end_time' => end_time, 'per_page' => '100'})
