@@ -56,6 +56,13 @@ quiz_list.each do |x|
         user_id = submission['user_id'].to_s
         currstudent = ""
 
+        # Check for invalid start and end times
+        if (submission['started_at'] == "null" || submission['finished_at'] == "null")
+          puts user_id
+        end
+
+        next if (submission['started_at'] == "null" || submission['finished_at'] =="null")
+
         # Set start time for page views to 1 hour before test start time
         start_time1 = submission['started_at'].to_s
         start = DateTime.parse(start_time1)
@@ -78,6 +85,9 @@ quiz_list.each do |x|
             currstudent = student['sortable_name']
           end
         end
+
+        # Skip the test student
+        next if sheetname == "Student, Test"
 
         puts currstudent +" started"
 
