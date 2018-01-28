@@ -1,0 +1,421 @@
+#!/usr/bin/env ruby
+require 'canvas-api'
+require 'json'
+require 'axlsx'
+require 'date'
+#require 'rubyXL'
+
+# Check for command line arguments
+if (ARGV.length <= 0)
+  puts "ERROR\n"
+  puts "Usage:./page_views.rb canvas_course_id start_time"
+  exit
+end
+
+# Take the course id and start_time from argument
+course_id = ARGV[0]
+# start time from command line
+period_start = ARGV[1]
+end_time = DateTime.now
+
+canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
+
+# Get all students
+# list_student = canvas.get("/api/v1/courses/" + course_id + "/users?", {'enrollment_type[]' => 'student'})
+list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
+students = Array.new(list_student)
+incomplete = Array.new
+
+# Create workbook for student
+p = Axlsx::Package.new
+
+# Get the quizzes
+quiz_list = canvas.get("/api/v1/courses/" + course_id + "/quizzes", {'per_page' => '100'})
+
+# Get all the quizzes
+while quiz_list.more? do
+  quiz_list.next_page!
+end
+
+# Create array to store sheetnames
+# sheetnames = Array.new
+user_id = ""
+sheetname = ""
+# sheetnames.push(sheetname)
+
+# determine name for corresponding user_id; needed to name the sheets
+students.each do |student|
+  currstudent = ""
+  if user_id == student['id'].to_s
+    currstudent = student['sortable_name']
+  end
+
+  # Get page views activity for each student who submitted a quiz
+  page_views = canvas.get("/api/v1/users/" + user_id + "/page_views?", {'start_time'=> period_start, 'end_time' => end_time, 'per_page' => '100'})
+
+  # Keep loading the page views till we get them all!
+  while page_views.more?  do
+    page_views.next_page!
+  end
+
+  quiz_list.each do |q|
+    if (q['title'].include? "Test A") || (q['title'].include? "Test B")
+      next if (q['title'].include? "Bonus")
+      quiz_id = q['id'].to_s
+
+      # Get all submissions for each quiz
+      submissions_list = canvas.get("/api/v1/courses/" + course_id + "/quizzes/" + quiz_id + "/submissions?", {'per_page' => '100'})
+      while submissions_list.more? do
+        submissions_list.next_page!
+      end
+      puts q['title'].to_s
+      # submissions = Array.new(submissions_list)
+
+      submissions_list.each do |submission|
+        user_id = submission['user_id'].to_s
+        # Check for invalid start and end times
+        if (submission['started_at'] == "null" || submission['finished_at'] == "null")
+          # incomplete.push(user_id)
+          puts user_id
+        end
+
+        next if (submission['started_at'] == "null" || submission['finished_at'] =="null")
+
+        # Set start time for page views to 1 hour before test start time
+        start_time1 = submission['started_at'].to_s
+        start = DateTime.parse(start_time1)
+        # start_time = start - (1/24.0)
+
+        # Set end time for page views to 1 hour after test submission time
+        end_time1 = submission['finished_at'].to_s
+        endt = DateTime.parse(end_time1)
+        # end_time = endt + (1/24.0)
+
+        # Compare submission time and period_start
+        # startperiod = DateTime.parse(period_start)
+
+        # skip if time provided to start check is after submission time
+        # next if endt < startperiod
+
+
+
+        # Skip the test student
+        next if sheetname == "Student, Test"
+
+      end
+      puts incomplete
+      puts "ready for next test"
+    else
+      puts "not a unit test"
+    end
+  end
+
+  puts currstudent +" started"
+  #Create worksheet for student
+  p.workbook.add_worksheet do |sheet|
+    # create headers
+    sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start/stop","file name","IP Switch","Browser Switch"]
+
+    page_views.each do |x|
+      whichquiz = ""
+      if (DateTime.parse(x['created_at']) >= start) && (DateTime.parse(x['created_at']) <= endt)
+        whichquiz = q['title']
+      else
+        whichquiz = "No test"
+        # sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip']], :types => [nil, nil, :string, :string, :string, :string]
+      end
+      sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], whichquiz], :types => [nil, nil, :string, :string, :string, :string, :string]
+    end
+
+    # add new line after each quiz results
+    sheet.add_row [""]
+
+    # rename sheet and add given name to sheetnames array
+    sheet.name = currstudent
+    # sheetnames.push(currstudent)
+    # puts currstudent+" done and created new sheet"
+  end
+  puts "done"
+
+  # Create the Excel document
+  p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a2.xlsx')
+
+end
+puts "all done"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# require 'canvas-api'
+# require 'json'
+# require 'axlsx'
+# require 'date'
+# #require 'rubyXL'
+#
+# # Check for command line arguments
+# if (ARGV.length <= 0)
+#   puts "ERROR\n"
+#   puts "Usage:./page_views.rb canvas_course_id start_time"
+#   exit
+# end
+#
+# # Take the course id and start_time from argument
+# course_id = ARGV[0]
+# # start time from command line
+# start_time = ARGV[1]
+# end_time = DateTime.now
+#
+# canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
+#
+# # Get all students
+# list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
+# students = Array.new(list_student)
+#
+# # Get the quizzes
+# quiz_list = canvas.get("/api/v1/courses/" + course_id + "/quizzes", {'per_page' => '100'})
+#
+# # Get all the quizzes
+# while quiz_list.more? do
+#   quiz_list.next_page!
+# end
+#
+# # Create workbook for student
+# p = Axlsx::Package.new
+#
+# # Create array to store sheetnames
+# # sheetnames = Array.new
+# # sheetname = ""
+# # sheetnames.push(sheetname)
+# user_id = ""
+#
+# list_student.each do |y|
+#   #go to next student
+#   next if y['id'].to_s == user_id
+#   p.workbook.add_worksheet do |sheet|
+#     # Define user ID and username, so they can later be used to name the worksheets
+#     user_id = y['id'].to_s
+#     sheetname = y['login_id']
+#
+#     # Get page views activity for each student who submitted a quiz
+#     # page_views = canvas.get("/api/v1/users/" + user_id + "/page_views?", {'start_time'=> start_time, 'end_time' => end_time, 'per_page' => '100'})
+#     #
+#     # # Keep loading the page views till we get them all!
+#     # while page_views.more?  do
+#     #   page_views.next_page!
+#     # end
+#
+#     quiz_list.each do |quiz|
+#       if (quiz['title'].include? "Test A") || (quiz['title'].include? "Test B")
+#         next if (quiz['title'].include? "Bonus")
+#         quiz_id = quiz['id'].to_s
+#
+#         # Get all submissions for each quiz
+#         submissions_list = canvas.get("/api/v1/courses/" + course_id + "/quizzes/" + quiz_id + "/submissions?", {'per_page' => '100'})
+#         while submissions_list.more? do
+#           submissions_list.next_page!
+#         end
+#
+#         submissions = Array.new(submissions_list)
+#
+#         submissions_list.each do |submission|
+#           # Check for invalid start and end times
+#           if (submission['started_at'] == "null" || submission['finished_at'] == "null")
+#             puts user_id
+#           end
+#
+#           next if (submission['started_at'] == "null" || submission['finished_at'] =="null")
+#
+#           # Set start time for page views to 1 hour before test start time
+#           start_time1 = submission['started_at'].to_s
+#           start = DateTime.parse(start_time1)
+#           start_time = start - (1/24.0)
+#
+#           # Set end time for page views to 1 hour after test submission time
+#           end_time1 = submission['finished_at'].to_s
+#           endt = DateTime.parse(end_time1)
+#           end_time = endt + (1/24.0)
+#
+#           # Compare submission time and period_start
+#           startperiod = DateTime.parse(period_start)
+#
+#           # skip if time provided to start check is after submission time
+#           next if endt < startperiod
+#
+#           # determine name for corresponding user_id; needed to name the sheets
+#           students.each do |student|
+#             if user_id == student['id'].to_s
+#               currstudent = student['sortable_name']
+#             end
+#           end
+#
+#           # Get page views activity for each student who submitted a quiz
+#           page_views = canvas.get("/api/v1/users/" + user_id + "/page_views?", {'start_time'=> start_time, 'end_time' => end_time, 'per_page' => '100'})
+#
+#           # Keep loading the page views till we get them all!
+#           while page_views.more?  do
+#             page_views.next_page!
+#           end
+#
+#           # create headers
+#           sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip","unit test"]#,"file name","IP Switch","Browser Switch","start/stop"
+#
+#           # list page views activity for said student
+#           page_views.each do |x|
+#             if (DateTime.parse(x['created_at']) >= DateTime.parse(submission['started_at']) && DateTime.parse(x['created_at']) <= DateTime.parse(submission['end_at']))
+#               #   sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], "Unit 1 Test A"]
+#               sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], quiz['title']], :types => [nil, nil, :string, :string, :string, :string, :string]
+#             end
+#
+#             puts sheetname+" done"
+#             sheet.name = sheetname
+#
+#
+#         end
+#
+#       else
+#         puts "no"
+#       end
+#     end
+#   end
+#   p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a1.xlsx')
+# end
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#     # submissions_list.each do |submission|
+#
+#       currstudent = ""
+#
+#       # Check for invalid start and end times
+#       if (submission['started_at'] == "null" || submission['finished_at'] == "null")
+#         incomplete.push(user_id)
+#         puts user_id
+#       end
+#
+#       next if (submission['started_at'] == "null" || submission['finished_at'] =="null")
+#
+#       # determine name for corresponding user_id; needed to name the sheets
+#       students.each do |student|
+#         if user_id == student['id'].to_s
+#           currstudent = student['sortable_name']
+#         end
+#       end
+#
+#       # Skip the test student
+#       next if sheetname == "Student, Test" #|| sheetname == "Registration, ABA" || sheetname == "Student, Test" || sheetname == "Student, Test"
+#
+#       puts currstudent +" started"
+#
+#
+#
+#       if sheetnames.include?(currstudent) # need to skip first iteration of this
+#         puts "existing worksheet"
+#         # Add data in existing sheet
+#         # workbook = RubyXL::Parser.parse("ultimate2.xlsx")
+#         # workbook[currstudent].add_row
+#
+#         # p.workbook.add_worksheet(name: currstudent, tab_selected: true) do |sheet|
+#         #   sheet.sheet_view.tab_selected = true
+#         #   # create headers to specify which quiz is being reported
+#         #   sheet.add_row [x['title']], :types => [:string]
+#         #
+#         #   # create headers
+#         #   sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip","start/stop","unit test","file name","IP Switch","Browser Switch"]
+#         #
+#         #   page_views.each do |x|
+#         #     # if (x['created_at'] == submission['started_at']) || (x['created_at'] == submission['end_at'])
+#         #     #   sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], "Unit 1 Test A"], :types => [nil, nil, :string, :string, :string, :string, :string]
+#         #     # else
+#         #       sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip']], :types => [nil, nil, :string, :string, :string, :string]
+#         #     # end
+#         #   end
+#         #
+#         #   # add new line after each quiz results
+#         #   sheet.add_row [""]
+#         #   # determine name for the different sheets in the excel file
+#         #   # students.each do |student|
+#         #   #   if curr == student['id'].to_s
+#         #   #     sheetname = student['sortable_name']
+#         #   #     # save all sheetnames in an array
+#         #   #     sheetnames.push(sheetname)
+#         #   #   end
+#         #   # end
+#         #   #sheet.name = name
+#         #   puts currstudent+" done and added in existing sheet"
+#         # end
+#       else
+#         #Create new worksheet for student
+#         p.workbook.add_worksheet do |sheet|
+#           puts "new worksheet"
+#           # create headers to specify which quiz is being reported
+#           sheet.add_row [x['title']], :types => [:string]
+#
+#           # create headers
+#           sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip","start/stop","unit test","file name","IP Switch","Browser Switch"]
+#
+#           page_views.each do |x|
+#             # if (x['created_at'] == submission['started_at']) || (x['created_at'] == submission['end_at'])
+#             #   sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], "Unit 1 Test A"], :types => [nil, nil, :string, :string, :string, :string, :string]
+#             # else
+#             sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip']], :types => [nil, nil, :string, :string, :string, :string]
+#             # end
+#           end
+#
+#           # add new line after each quiz results
+#           sheet.add_row [""]
+#
+#           # rename sheet and add given name to sheetnames array
+#           sheet.name = currstudent
+#           sheetnames.push(currstudent)
+#           puts currstudent+" done and created new sheet"
+#         end
+#         puts "ready for next student"
+#       end
+#       # Create the Excel document
+#       p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a1.xlsx')
+#     end
+#     puts incomplete
+#     puts "ready for next test"
+#   else
+#     puts "not a unit test"
+#   end
+# end
+# puts "all done"
