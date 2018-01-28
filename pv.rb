@@ -20,8 +20,10 @@ period_start = ARGV[1]
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
 
 # Get all students
-list_student = canvas.get("/api/v1/courses/" + course_id + "/users?", {'enrollment_type[]' => 'student'})
+# list_student = canvas.get("/api/v1/courses/" + course_id + "/users?", {'enrollment_type[]' => 'student'})
+list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
 students = Array.new(list_student)
+incomplete = Array.new
 
 # Create workbook for student
 p = Axlsx::Package.new
@@ -58,6 +60,7 @@ quiz_list.each do |x|
 
         # Check for invalid start and end times
         if (submission['started_at'] == "null" || submission['finished_at'] == "null")
+          incomplete.push(user_id)
           puts user_id
         end
 
@@ -163,8 +166,9 @@ quiz_list.each do |x|
           puts "ready for next student"
         end
         # Create the Excel document
-        p.serialize('ultimate2.xlsx')
+        p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a0.xlsx')
       end
+      puts incomplete
       puts "ready for next test"
     else
       puts "not a unit test"
