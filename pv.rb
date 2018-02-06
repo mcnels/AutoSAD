@@ -52,7 +52,7 @@ quiz_list.each do |x|
           submissions_list.next_page!
       end
       puts x['title'].to_s
-      submissions = Array.new(submissions_list)
+      # submissions = Array.new(submissions_list) not used somehow
 
       submissions_list.each do |submission|
         user_id = submission['user_id'].to_s
