@@ -15,4 +15,6 @@ REQUIREMENTS
 
 USAGE
 
+- No unpublished unit tests in the quizzes section
+
 FEATURES
