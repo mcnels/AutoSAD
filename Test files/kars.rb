@@ -35,7 +35,7 @@ while quiz_list.more? do
 end
 
 #stuRec = Array.new(Array.new)
-stuRec = Array.new((students.size)+1){Array.new(19)}
+stuRec = Array.new((students.size)+1){Array.new(11)}
 conflict = ""
 i = 1
 students.each do |student|
@@ -96,9 +96,9 @@ stuRec.each { |x|
 
 # sort stuRec by row name
 # Iterate over student records array to print page views activity
-k = 0
+#k = 0
 stuRec[1..-1].each do |stu|
-  user_id = stu[k].to_s
+  user_id = stu[0].to_s
   puts user_id
   next if user_id.to_s == conflict #go to next student
   conflict = user_id.to_s
@@ -110,6 +110,7 @@ stuRec[1..-1].each do |stu|
     end
   end
   puts currstudent+" started"
+
   p.workbook.add_worksheet do |sheet|
 
     # stu[1..-1].each do |rec|
@@ -137,11 +138,14 @@ stuRec[1..-1].each do |stu|
         # puts currstudent+" started
         sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start/stop","file name","IP Switch","Browser Switch"]
         stu[1..-1].each do |rec|
+          # if stu[-1]
+          #   puts "last iteration"
+          # end
         #Create worksheet for student
         # p.workbook.add_worksheet do |sheet|
           # create headers
           # sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start/stop","file name","IP Switch","Browser Switch"]
-
+          puts rec[:stime]
           if rec[:stime] == "missing" || rec[:sbmtime] == "missing"
             sheet.add_row ["missing", "missing", "missing", "missing", "missing", "missing", rec[:unit].to_s], :types => [:string, :string, :string, :string, :string, :string, :string]
           else
@@ -166,15 +170,17 @@ stuRec[1..-1].each do |stu|
           end
           # add new line after each quiz results
           sheet.add_row [""]
-    end
+        end
+        # Jump to last (or penultimate) iteration of rec in debug session to pinpoint the problem
     # rename sheet and add given name to sheetnames array
     sheet.name = currstudent
     # end
     puts currstudent+" done"
 
-    k = k + 1
+    # k = k + 1
       # Create the Excel document
-      p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a6.xlsx')
+      p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a7.xlsx')
   end
+  #k = k + 1
 end
 puts "all done"
