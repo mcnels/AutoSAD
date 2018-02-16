@@ -15,7 +15,8 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.now
+end_time = DateTime.parse("2017-11-15T00:00:00+00:00")
+#end_time = DateTime.now
 
 # Use bearer token
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
@@ -35,8 +36,9 @@ while quiz_list.more? do
   quiz_list.next_page!
 end
 
-#there should be a better way for this, otherwise I would have to specify the amount of tests to check for every time
-stuRec = Array.new((students.size)+1){Array.new(11)}
+# there should be a better way for this, otherwise I would have to specify the amount of tests to check for every time
+# I should have a condition here that looks at the course ID to determine a tentative size for the array
+stuRec = Array.new((students.size)+1){Array.new(19)}
 conflict = ""
 i = 1
 
@@ -46,6 +48,8 @@ students.each do |student|
   next if student['id'].to_s == '1856840' #id of test student
   conflict = student['id'].to_s
   j = 1
+  # boolean for students that have submssions
+  #stuHasSubm = "false"
 
   # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
   quiz_list.each do |q|
@@ -53,6 +57,11 @@ students.each do |student|
     if (q['title'].include? "Test A") || (q['title'].include? "Test B")
       next if (q['title'].include? "Bonus") || (q['title'].include? "Proctored")
       quiz_id = q['id'].to_s
+
+      # Skip checking tests that happen after end_time
+      #puts DateTime.parse(q['due_at'].to_s)
+      break if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
+      next if DateTime.parse(q['due_at'].to_s) > end_time
 
       # Get all submissions for each quiz
       submissions_list = canvas.get("/api/v1/courses/" + course_id + "/quizzes/" + quiz_id + "/submissions?", {'per_page' => '100'})
@@ -67,17 +76,23 @@ students.each do |student|
       stuRec[0][j] = q['title']
       # Add submissions info to array of records for student
       submissions_list.each do |submission|
+        # break out of the quizzes loop
+
         # if the id of the current student being checked matches the user_id received from the submission data, then save info in the matrix
+        #next if student['id'].to_s != submission['user_id'].to_s
+
         if student['id'].to_s == submission['user_id'].to_s #&& (submission['started_at'] != "null" || submission['finished_at'] != "null")
           stuRec[i][j] = {:stime => submission['started_at'], :sbmtime => submission['finished_at'], :unit => q['title']}
+          #stuHasSubm = "true"
           tookTest = "Y"
           break if tookTest == "Y"
         end
       end
 
+      #break if stuHasSubm == "false"
       # if the student didn't take the test or for some reason the information is missing
       if tookTest == "N"
-        stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
+         stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
       end
       j = j + 1
       # Print to console
@@ -105,7 +120,7 @@ stuRec[1..-1].each do |test|
   next if user_id.to_s == conflict #go to next student
   conflict = user_id.to_s
   currstudent = ""
-
+f
   # Assign worksheet names based on student's user id
   students.each do |student|
     if user_id.to_s == student['id'].to_s
@@ -152,7 +167,7 @@ stuRec[1..-1].each do |test|
     puts currstudent+" done"
 
     # Create the Excel document
-    p.serialize('/Users/mcnels/Documents/CE/Canvas/5011test1a8.xlsx')
+    p.serialize('/Users/mcnels/Documents/CE/Canvas/5013test1.xlsx')
   end
 end
 # Print to console
