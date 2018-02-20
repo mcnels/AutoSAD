@@ -15,8 +15,8 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.parse("2017-10-20T00:00:00+00:00")
-#end_time = DateTime.now
+#end_time = DateTime.parse("2018-02-20T00:00:00+00:00")
+end_time = DateTime.now
 
 # Use bearer token
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
@@ -39,6 +39,8 @@ end
 # there should be a better way for this, otherwise I would have to specify the amount of tests to check for every time
 # I should have a condition here that looks at the course ID to determine a tentative size for the array
 stuRec = Array.new((students.size)+1){Array.new(19)}
+# array containing all problematic students
+skipped = Array.new
 conflict = ""
 i = 1
 
@@ -46,6 +48,11 @@ i = 1
 students.each do |student|
   next if student['id'].to_s == conflict #go to next student
   next if student['id'].to_s == '1856840' #id of test student
+  if student['sortable_name'] == ""
+    skipped.push(student['id'])
+  end
+  next if student['sortable_name'] == ""
+
   conflict = student['id'].to_s
   user_id = conflict
   j = 1
@@ -138,7 +145,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/mcnels/Documents/CE/Canvas/5013testX.xlsx')
+        p.serialize('C:/Users/msylvestreph2016/Desktop/Tests/5013test1.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
@@ -153,6 +160,7 @@ students.each do |student|
   i = i + 1
 end
 puts "all done"
+puts skipped
 # Print matrix to console
 # stuRec.each { |x|
 #   puts x.join(" ")
