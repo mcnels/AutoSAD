@@ -95,5 +95,5 @@ submissions_list.each do |submission|
   end
 
   # Create the Excel document
-  p.serialize('5011u1a(rest).xlsx')
+  p.serialize('/Users/lkangas/Documents/Tests/test.xlsx')
 end

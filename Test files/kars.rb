@@ -15,7 +15,7 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-#end_time = DateTime.parse("2018-02-20T00:00:00+00:00")
+#end_time = DateTime.parse("2017-11-15T00:00:00+00:00")
 end_time = DateTime.now
 
 # Use bearer token
@@ -48,6 +48,7 @@ i = 1
 students.each do |student|
   next if student['id'].to_s == conflict #go to next student
   next if student['id'].to_s == '1856840' #id of test student
+  # if student's name is an empty string
   if student['sortable_name'] == ""
     skipped.push(student['id'])
   end
@@ -72,7 +73,7 @@ students.each do |student|
     escape = false
 
     # Print header row in Excel worksheet
-    sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start/stop","file name","IP Switch","Browser Switch"]
+    sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start", "stop", "IP Switch", "Browser Switch", "file name"]
 
     # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
     quiz_list.each do |q|
@@ -84,7 +85,9 @@ students.each do |student|
         if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
           escape = true
         end
-        # Skip checking tests that happen after end_time
+        # Skip checking tests whose due dates are before the period start (q['lock_info']['lock_at'].to_s)
+        next if DateTime.parse(q['lock_info']['lock_at'].to_s) < DateTime.parse(period_start) #subject to change/need to check how due dates are received compared to how they are on the website
+        # Skip checking tests whose due dates are after end_time
         break if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
         next if DateTime.parse(q['due_at'].to_s) > end_time
 
@@ -127,12 +130,32 @@ students.each do |student|
 
         # If there's no record then write "missing"
         if  stuRec[i][j][:stime] == "missing" || stuRec[i][j][:sbmtime] == "missing"
-          sheet.add_row ["missing", "missing", "missing", "missing", "missing", "missing", stuRec[i][j][:unit].to_s], :types => [:string, :string, :string, :string, :string, :string, :string]
+          sheet.add_row ["missing", "missing", "missing", "missing", "missing", "missing", stuRec[i][j][:unit].to_s, "missing", "missing", "missing", "missing"], :types => [:string, :string, :string, :string, :string, :string, :string, :string, :string, :string, :string]
         else
+          itcount = 0
+          cur_ip = ""
+          cur_browser = ""
           # Print the page views activity for the period between the start time and the submission time
           page_views.each do |x|
+            itcount = itcount + 1
+            if itcount >= 2
+              if cur_ip != x['remote_ip']
+                ipAns = "Different IP"
+              else
+                ipAns = "Same IP"
+              end
+              cur_ip = x['remote_ip']
+              if cur_browser != x['user_agent']
+                browsAns = "Different Browser"
+              else
+                browsAns = "Same Browser"
+              end
+              cur_browser = x['user_agent']
+            end
+            # if x['participated'] == "true"
+            # if x['url'].contains(id of file)
             next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(1/24.0)) || DateTime.parse(x['created_at']) >= (DateTime.parse(stuRec[i][j][:sbmtime])+(1/24.0))
-            sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s], :types => [nil, nil, :string, :string, :string, :string, :string]
+            sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
           end
         end
         # add new line after each quiz results
@@ -145,7 +168,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('C:/Users/msylvestreph2016/Desktop/Tests/5013test1.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011on2282018.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
