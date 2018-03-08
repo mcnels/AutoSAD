@@ -147,6 +147,11 @@ students.each do |student|
           itcount = 0
           cur_ip = ""
           cur_browser = ""
+
+          # Define styles
+          trueCase = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
+          fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
+
           # Print the page views activity for the period between the start time and the submission time
           page_views.each do |x|
             itcount = itcount + 1
@@ -164,10 +169,17 @@ students.each do |student|
               end
               cur_browser = x['user_agent']
             end
-            # if x['participated'] == "true"
+
             # if x['url'].contains(id of file)
             next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(1/24.0)) || DateTime.parse(x['created_at']) >= (DateTime.parse(stuRec[i][j][:sbmtime])+(1/24.0))
-            sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
+
+            if x['participated'].to_s == "true"
+              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => trueCase
+            elsif x['controller'].to_s == "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
+              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => fileInBetween
+            else
+              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
+            end
           end
         end
         # add new line after each quiz results
