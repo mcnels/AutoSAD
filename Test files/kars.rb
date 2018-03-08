@@ -15,13 +15,13 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-#end_time = DateTime.parse("2017-11-15T00:00:00+00:00")
+#end_time = DateTime.parse("2018-02-01T00:00:00-00:00")
 end_time = DateTime.now
 
 # Use bearer token
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
 
-# Get all students
+# Get all students/ might need to change this and get students from sections endpoint so to get remove transfers and withdrawals
 list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
 students = Array.new(list_student)
 
@@ -46,16 +46,18 @@ i = 1
 
 #For each student in the course, do this...
 students.each do |student|
-  next if student['id'].to_s == conflict #go to next student
-  next if student['id'].to_s == '1856840' #id of test student
-  # if student's name is an empty string
-  if student['sortable_name'] == ""
+  next if student['sortable_name'].to_s == conflict #go to next student
+  next if student['id'].to_s == "754859" # Skip Eric
+    # if student's name is an empty string//add transfers and withdrawals manually for now temp sol
+  if student['sortable_name'] == "" || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' || student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953'
     skipped.push(student['id'])
   end
+  next if student['id'].to_s == '1856840' || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' #id of test student
+  next if student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953' #pending students
   next if student['sortable_name'] == ""
 
-  conflict = student['id'].to_s
-  user_id = conflict
+  conflict = student['sortable_name'].to_s
+  user_id = student['id'].to_s
   j = 1
 
   currstudent = ""
@@ -85,8 +87,9 @@ students.each do |student|
         if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
           escape = true
         end
-        # Skip checking tests whose due dates are before the period start (q['lock_info']['lock_at'].to_s)
-        next if DateTime.parse(q['lock_info']['lock_at'].to_s) < DateTime.parse(period_start) #subject to change/need to check how due dates are received compared to how they are on the website
+        #puts quiz_id
+        # Skip checking tests whose due dates are before the period start (q['lock_info']['lock_at'].to_s) | not all quizzes have this info... be careful
+        next if DateTime.parse(q['due_at'].to_s) < DateTime.parse(period_start.to_s) #subject to change/need to check how due dates are received compared to how they are on the website
         # Skip checking tests whose due dates are after end_time
         break if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
         next if DateTime.parse(q['due_at'].to_s) > end_time
@@ -107,11 +110,11 @@ students.each do |student|
 
           if student['id'].to_s == submission['user_id'].to_s #&& (submission['started_at'] != "null" || submission['finished_at'] != "null")
             # Assign worksheet names based on student's user id
-            students.each do |student|
-              if user_id == student['id'].to_s
+           # students.each do |student|
+              #if user_id == student['id'].to_s
                 currstudent = student['sortable_name'] # might need to change this to username
-              end
-            end
+              #end
+            #end
 
             # Print to console
             puts currstudent+" started"
@@ -119,12 +122,21 @@ students.each do |student|
             stuRec[i][j] = {:stime => submission['started_at'], :sbmtime => submission['finished_at'], :unit => q['title']}
             tookTest = "Y"
             break if tookTest == "Y"
+          #else
+            #students.each do |student|
+             # if user_id == student['id'].to_s
+             #    currstudent = student['sortable_name'] # might need to change this to username
+             #    puts currstudent+" started"
+              #end
+            #end
           end
         end
 
         #break if stuHasSubm == "false"
-        # if the student didn't take the test or for some reason the information is missing
+        # if the student didn't take the test or for some reason the information is missing/ can be moved into the else part of the previous if/else statement
         if tookTest == "N"
+          currstudent = student['sortable_name'] # might need to change this to username
+          puts currstudent+" started"
            stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
         end
 
@@ -162,13 +174,18 @@ students.each do |student|
         sheet.add_row [""]
 
         # rename sheet and add given name to sheetnames array
-        sheet.name = currstudent
+        if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " "
+          currstudent = student['id'].to_s
+          sheet.name = currstudent
+        else
+          sheet.name = currstudent
+        end
 
         # Print to console
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011on2282018.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011ftest1.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
