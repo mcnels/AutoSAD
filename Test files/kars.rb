@@ -43,7 +43,7 @@ stuRec = Array.new((students.size)+1){Array.new(19)}
 skipped = Array.new
 conflict = ""
 i = 1
-
+count = 0
 #For each student in the course, do this...
 students.each do |student|
   next if student['sortable_name'].to_s == conflict #go to next student
@@ -61,7 +61,8 @@ students.each do |student|
   j = 1
 
   currstudent = ""
-
+    count = count + 1
+  next if count < 562
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
     # Get page views activity for each student who submitted a quiz
@@ -173,7 +174,7 @@ students.each do |student|
             # if x['url'].contains(id of file)
             next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(1/24.0)) || DateTime.parse(x['created_at']) >= (DateTime.parse(stuRec[i][j][:sbmtime])+(1/24.0))
 
-            if x['participated'].to_s == "true"
+            if x['controller'].to_s != "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
               sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => trueCase
             elsif x['controller'].to_s == "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
               sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => fileInBetween
@@ -197,7 +198,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011ftest1.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011ftestrest.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
@@ -209,6 +210,7 @@ students.each do |student|
     break if escape
   end
   puts currstudent+" done"
+  puts count
   i = i + 1
 end
 puts "all done"
