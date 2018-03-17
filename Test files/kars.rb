@@ -15,8 +15,8 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-#end_time = DateTime.parse("2018-02-01T00:00:00-00:00")
-end_time = DateTime.now
+end_time = DateTime.parse("2017-09-27T00:00:00-00:00")
+#end_time = DateTime.now
 
 # Use bearer token
 canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
@@ -62,7 +62,7 @@ students.each do |student|
 
   currstudent = ""
     count = count + 1
-  next if count < 562
+  #next if count != 13
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
     # Get page views activity for each student who submitted a quiz
@@ -150,7 +150,7 @@ students.each do |student|
           cur_browser = ""
 
           # Define styles
-          trueCase = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
+          acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
           fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
 
           # Print the page views activity for the period between the start time and the submission time
@@ -172,12 +172,19 @@ students.each do |student|
             end
 
             # if x['url'].contains(id of file)
-            next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(1/24.0)) || DateTime.parse(x['created_at']) >= (DateTime.parse(stuRec[i][j][:sbmtime])+(1/24.0))
+            # Skip if activity is not between 6 minutes before start time and submission time
+            next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(0.1/24.0)) || DateTime.parse(x['created_at']) > (DateTime.parse(stuRec[i][j][:sbmtime]))
 
-            if x['controller'].to_s != "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
-              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => trueCase
-            elsif x['controller'].to_s == "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
-              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => fileInBetween
+            if x['controller'].to_s == "files"# && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
+              if x['url'].to_s.include?("download?download") || x['url'].to_s.include?("module_item_id")
+                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => fileInBetween
+            #elsif x['controller'].to_s == "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
+              elsif x['url'].to_s.include? "preview"
+                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+              else
+                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+              end
+            #elsif x['url'].to_s.include?("ussr_id=xxxx") && xxxx !=  q['id']
             else
               sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
             end
@@ -198,7 +205,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011ftestrest.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011tifsesummer.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
