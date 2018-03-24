@@ -15,7 +15,7 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.parse("2017-09-27T00:00:00-00:00")
+end_time = DateTime.parse("2018-03-23T00:00:00-00:00")
 #end_time = DateTime.now
 
 # Use bearer token
@@ -62,7 +62,7 @@ students.each do |student|
 
   currstudent = ""
     count = count + 1
-  #next if count != 13
+  next if count < 95 || count > 250
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
     # Get page views activity for each student who submitted a quiz
@@ -116,6 +116,7 @@ students.each do |student|
                 currstudent = student['sortable_name'] # might need to change this to username
               #end
             #end
+            break if submission['started_at'].nil? || submission['finished_at'].nil?
 
             # Print to console
             puts currstudent+" started"
@@ -143,7 +144,7 @@ students.each do |student|
 
         # If there's no record then write "missing"
         if  stuRec[i][j][:stime] == "missing" || stuRec[i][j][:sbmtime] == "missing"
-          sheet.add_row ["missing", "missing", "missing", "missing", "missing", "missing", stuRec[i][j][:unit].to_s, "missing", "missing", "missing", "missing"], :types => [:string, :string, :string, :string, :string, :string, :string, :string, :string, :string, :string]
+          sheet.add_row ["missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s], :types => [:string, :string, :string, :string, :string, :string, :string, :string, :string, :string, :string]
         else
           itcount = 0
           cur_ip = ""
@@ -152,7 +153,7 @@ students.each do |student|
           # Define styles
           acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
           fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
-          unacceptableTest = sheet.styles.add_style :fg_color => "006400", :b => true
+          unacceptableTest = sheet.styles.add_style :fg_color => "cd3700", :b => true
 
           # Print the page views activity for the period between the start time and the submission time
           page_views.each do |x|
@@ -213,7 +214,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011tifsesummer.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011final5.xlsx')
         j = j + 1
         # Print to console
         # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
