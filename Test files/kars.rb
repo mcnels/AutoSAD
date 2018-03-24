@@ -48,10 +48,13 @@ count = 0
 students.each do |student|
   next if student['sortable_name'].to_s == conflict #go to next student
   next if student['id'].to_s == "754859" # Skip Eric
+
     # if student's name is an empty string//add transfers and withdrawals manually for now temp sol
-  if student['sortable_name'] == "" || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' || student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953'
+  if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' || student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953'
     skipped.push(student['id'])
   end
+  next if student['sortable_name'].to_s == "Student, Test"
+  # Account for pending, withdraws, and other weird cases
   next if student['id'].to_s == '1856840' || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' #id of test student
   next if student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953' #pending students
   next if student['sortable_name'] == ""
