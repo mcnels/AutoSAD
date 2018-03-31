@@ -37,19 +37,24 @@ while quiz_list.more? do
 end
 
 # there should be a better way for this, otherwise I would have to specify the amount of tests to check for every time
-# I should have a condition here that looks at the course ID to determine a tentative size for the array
+# I should have a condition here that looks at the course ID to determine a tentative size for the array... or not
 stuRec = Array.new((students.size)+1){Array.new(19)}
-# array containing all problematic students
+
+# array containing all students skipped during check
 skipped = Array.new
+# array containing id of the bonus tests
+bonusTests = Array.new
+
 conflict = ""
-i = 1
-count = 0
+i = 1 # index student in the response
+count = 0 # count of students
+
 #For each student in the course, do this...
 students.each do |student|
   next if student['sortable_name'].to_s == conflict #go to next student
-  next if student['id'].to_s == "754859" # Skip Eric
+  next if student['id'].to_s == "754859" # Skip Eric ... include other staff members here in an OR clause
 
-    # if student's name is an empty string//add transfers and withdrawals manually for now temp sol
+  # if student's name is an empty string// student is the Test student//add transfers and withdrawals manually for now temporary solution
   if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' || student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953'
     skipped.push(student['id'])
   end
@@ -61,11 +66,12 @@ students.each do |student|
 
   conflict = student['sortable_name'].to_s
   user_id = student['id'].to_s
-  j = 1
+  j = 1 # index quiz in the response
 
   currstudent = ""
-    count = count + 1
-  next if count < 95 || count > 250
+  count = count + 1
+  # next if count < 95 || count > 250 # if we need to start at a specific position in the list of students
+
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
     # Get page views activity for each student who submitted a quiz
@@ -79,23 +85,28 @@ students.each do |student|
     escape = false
 
     # Print header row in Excel worksheet
-    sheet.add_row ["url","controller","created_at","user_agent","participated","remote_ip", "unit test", "start", "stop", "IP Switch", "Browser Switch", "file name"]
+    sheet.add_row ["url", "created_at", "start", "IP used", "Browser used", "unit test", "controller", "remote_ip", "user_agent", "participated", "file name"], :b => true
 
     # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
     quiz_list.each do |q|
       # Applying the filters...
       if (q['title'].include? "Test A") || (q['title'].include? "Test B")
+        # Save ids of bonus tests in array for later comparison
+        if q['title'].include? "Bonus"
+          bonusTests.push(q['id'].to_s)
+        end
+        # skip bonus and proctored tests
         next if (q['title'].include? "Bonus") || (q['title'].include? "Proctored")
         quiz_id = q['id'].to_s
 
         if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
           escape = true
         end
-        #puts quiz_id
+
         # Skip checking tests whose due dates are before the period start (q['lock_info']['lock_at'].to_s) | not all quizzes have this info... be careful
         next if DateTime.parse(q['due_at'].to_s) < DateTime.parse(period_start.to_s) #subject to change/need to check how due dates are received compared to how they are on the website
         # Skip checking tests whose due dates are after end_time
-        break if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B"
+        break if DateTime.parse(q['due_at'].to_s) > end_time && q['title'] == "Unit 9 Test B" # or if escape is true
         next if DateTime.parse(q['due_at'].to_s) > end_time
 
         # Get all submissions for each quiz
@@ -113,12 +124,7 @@ students.each do |student|
         submissions_list.each do |submission|
 
           if student['id'].to_s == submission['user_id'].to_s #&& (submission['started_at'] != "null" || submission['finished_at'] != "null")
-            # Assign worksheet names based on student's user id
-           # students.each do |student|
-              #if user_id == student['id'].to_s
-                currstudent = student['sortable_name'] # might need to change this to username
-              #end
-            #end
+            currstudent = student['sortable_name'] # might need to change this to username
             break if submission['started_at'].nil? || submission['finished_at'].nil?
 
             # Print to console
@@ -127,83 +133,117 @@ students.each do |student|
             stuRec[i][j] = {:stime => submission['started_at'], :sbmtime => submission['finished_at'], :unit => q['title']}
             tookTest = "Y"
             break if tookTest == "Y"
-          #else
-            #students.each do |student|
-             # if user_id == student['id'].to_s
-             #    currstudent = student['sortable_name'] # might need to change this to username
-             #    puts currstudent+" started"
-              #end
-            #end
           end
         end
 
-        #break if stuHasSubm == "false"
-        # if the student didn't take the test or for some reason the information is missing/ can be moved into the else part of the previous if/else statement
+        # if the student didn't take the test or for some reason the information is missing
         if tookTest == "N"
-          currstudent = student['sortable_name'] # might need to change this to username
-          puts currstudent+" started"
-           stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
+            currstudent = student['sortable_name'] # might need to change this to username
+            puts currstudent+" started"
+            stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
         end
 
-        # If there's no record then write "missing"
+        # If there's no record then write "missing" to the worksheet
         if  stuRec[i][j][:stime] == "missing" || stuRec[i][j][:sbmtime] == "missing"
           sheet.add_row ["missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s, "missing "+stuRec[i][j][:unit].to_s], :types => [:string, :string, :string, :string, :string, :string, :string, :string, :string, :string, :string]
         else
-          itcount = 0
-          cur_ip = ""
-          cur_browser = ""
+          # arrays containing ips and browsers
+          ipArray = Array.new
+          browsArray = Array.new
+
+          ipAns = 1
+          browsAns = 1
 
           # Define styles
           acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
           fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
           unacceptableTest = sheet.styles.add_style :fg_color => "cd3700", :b => true
+          separation = sheet.styles.add_style :bg_color => "ffffff"
 
           # Print the page views activity for the period between the start time and the submission time
           page_views.each do |x|
-            itcount = itcount + 1
-            if itcount >= 2
-              if cur_ip != x['remote_ip']
-                ipAns = "Different IP"
-              else
-                ipAns = "Same IP"
-              end
-              cur_ip = x['remote_ip']
-              if cur_browser != x['user_agent']
-                browsAns = "Different Browser"
-              else
-                browsAns = "Same Browser"
-              end
-              cur_browser = x['user_agent']
-            end
+
 
             # if x['url'].contains(id of file)
             # Skip if activity is not between 6 minutes before start time and submission time
-            next if DateTime.parse(x['created_at']) <= (DateTime.parse(stuRec[i][j][:stime])-(0.1/24.0)) || DateTime.parse(x['created_at']) > (DateTime.parse(stuRec[i][j][:sbmtime]))
+            next if DateTime.parse(x['created_at']) < (DateTime.parse(stuRec[i][j][:stime])) || DateTime.parse(x['created_at']) > (DateTime.parse(stuRec[i][j][:sbmtime]))
+
+            # Keep track of IPs
+            newIP = true
+            if ipArray.empty?
+              newIP = false
+              ipArray.push("IP "+ipAns.to_s+"   "+x['remote_ip'].to_s)
+            else
+              ipArray.each do |ip|
+                if ip.to_s.include? x['remote_ip'].to_s
+                  newIP = false
+                  ipArray.push(ip.to_s)
+                end
+                break if ip.to_s.include? x['remote_ip'].to_s
+              end
+            end
+
+            if newIP
+              ipAns = ipAns + 1
+              ipArray.push("IP "+ipAns.to_s+"    "+x['remote_ip'].to_s)
+            end
+
+            # Keep track of Browsers
+            newBrows = true
+            if browsArray.empty?
+              newBrows = false
+              browsArray.push("Brows "+browsAns.to_s+"   "+x['user_agent'].to_s)
+            else
+              browsArray.each do |brows|
+                if brows.to_s.include? x['user_agent'].to_s
+                  newBrows = false
+                  browsArray.push(brows.to_s)
+                end
+                break if brows.to_s.include? x['user_agent'].to_s
+              end
+            end
+
+            if newBrows && !(x['user_agent'].to_s.include? "RPNow")
+              browsAns = browsAns + 1
+              browsArray.push("Brows "+browsAns.to_s+"    "+x['user_agent'].to_s)
+            end
+
             # File case
-            if x['controller'].to_s == "files"# && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
+            if x['controller'].to_s == "files"
               if x['url'].to_s.include?("download?download") || x['url'].to_s.include?("module_item_id")
-                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => fileInBetween
-            #elsif x['controller'].to_s == "files" && (DateTime.parse(x['created_at']) >= DateTime.parse(stuRec[i][j][:stime]) && DateTime.parse(x['created_at']) <= DateTime.parse(stuRec[i][j][:sbmtime]))
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => fileInBetween
               elsif x['url'].to_s.include? "preview"
-                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+              elsif x['url'].to_s.include? "assessment_questions"
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
               else
-                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => acceptableFile
               end
             # access submission for A before starting B
             elsif x['url'].to_s.include?("quizzes")
-              if x['url'].to_s.include?(q['id'].to_s)
-                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
+              hasBonus = false
+              bonusTests.each do |bonus|
+                if x['url'].to_s.include?(bonus)
+                  hasBonus = true
+                  break if hasBonus
+                end
+              end
+              # Bonus tests are acceptable
+              if hasBonus || x['url'].to_s.include?(q['id'].to_s)
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
               else
-                sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
+                sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
               end
             # regular case
             else
-              sheet.add_row [x['url'], x['controller'], x['created_at'], x['user_agent'], x['participated'], x['remote_ip'], stuRec[i][j][:unit].to_s, stuRec[i][j][:stime].to_s, stuRec[i][j][:sbmtime].to_s, ipAns, browsAns], :types => [nil, nil, :string, :string, :string, :string, :string, :string, :string, :string, :string]
+              sheet.add_row [x['url'], x['created_at'], stuRec[i][j][:stime].to_s, ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
             end
           end
+          ipArray.clear
+          browsArray.clear
         end
         # add new line after each quiz results
-        sheet.add_row [""]
+        sheet.add_row [""], :style => separation
 
         # rename sheet and add given name to sheetnames array
         if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " "
@@ -217,10 +257,8 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011final5.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/newformat.xlsx')
         j = j + 1
-        # Print to console
-        # puts "submission info recorded for "+  student['sortable_name'] + " for " + q['title'].to_s
       else
         # Print to console
         #puts "test does not fit ASC's criteria"
@@ -229,6 +267,7 @@ students.each do |student|
     break if escape
   end
   puts currstudent+" done"
+
   puts count
   i = i + 1
 end
