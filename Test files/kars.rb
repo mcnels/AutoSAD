@@ -45,6 +45,47 @@ skipped = Array.new
 # array containing id of the bonus tests
 bonusTests = Array.new
 
+# arrays for file system
+folders = Array.new
+subf = Array.new
+files = Array.new
+
+list_files = canvas.get("/api/v1/courses/" + course_id + "/folders/")
+while list_files.more? do
+  list_files.next_page!
+end
+
+list_files.each do |fi|
+  # save needed folders in folders array
+  if fi['name'] == "Course Resources" || fi['name'] == "Instructor Materials"
+    folders.push(fi['id'])
+  end
+end
+
+folders.each do |fol|
+  sub = canvas.get("/api/v1/folders/"+ fol.to_s + "/folders")
+  while sub.more? do
+    sub.next_page!
+  end
+  sub.each do |sub|
+    # save needed sub folders in subf array
+    if sub['name'] == "PPT" || sub['name'] == "Reading Assignment" || sub['name'] == "SAFMEDS" || sub['name'] == "StudyGuide" || sub['full_name'].include?("Instructor Materials")
+      subf.push(sub['id'])
+    end
+  end
+end
+
+subf.each do |sf|
+  docs = canvas.get("/api/v1/folders/"+ sf.to_s + "/files")
+  while docs.more? do
+    docs.next_page!
+  end
+  docs.each do |doc|
+    # save needed files' urls in files array
+    files.push(:id => doc['id'], :name => doc['filename'])
+  end
+end
+
 conflict = ""
 i = 1 # index student in the response
 count = 0 # count of students
@@ -85,14 +126,14 @@ students.each do |student|
     escape = false
 
     # Define styles
-    acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
+    #acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
     fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
     unacceptableTest = sheet.styles.add_style :fg_color => "cd3700", :b => true
     separation = sheet.styles.add_style :bg_color => "7a1818", :fg_color => "ffffff", :b => true
     headers = sheet.styles.add_style :bg_color => "e5c5c5", :fg_color => "f30505", :b => true
 
     # Print header row in Excel worksheet
-    sheet.add_row ["url", "created_at", "IP used", "Browser used", "unit test", "controller", "remote_ip", "user_agent", "participated", "file name"], :style => headers
+    sheet.add_row ["URL", "Created At", "IP used", "Browser used", "Unit Test", "controller", "remote_ip", "user_agent", "participated", "file name"], :style => headers
 
     # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
     quiz_list.each do |q|
@@ -150,7 +191,7 @@ students.each do |student|
             stuRec[i][j] = {:stime => "missing", :sbmtime => "missing", :unit => q['title']}
         end
         # block separator
-        sheet.add_row [stuRec[i][j][:unit].to_s + " Block", "Start time: ", stuRec[i][j][:stime].to_s, "Submission time: ", stuRec[i][j][:sbmtime].to_s], :types => [:string, :string, :string, :string], :style => separation
+        sheet.add_row [stuRec[i][j][:unit].to_s + " Block", "Start time: ", stuRec[i][j][:stime].to_s, "Submission time: " + stuRec[i][j][:sbmtime].to_s], :types => [:string, :string, :string, :string], :style => separation
 
         # If there's no record then write "missing" to the worksheet
         if  stuRec[i][j][:stime] == "missing" || stuRec[i][j][:sbmtime] == "missing"
@@ -213,17 +254,20 @@ students.each do |student|
             end
 
             # File case
+            fileFound = false
             if x['controller'].to_s == "files"
-              if x['url'].to_s.include?("download?download") || x['url'].to_s.include?("module_item_id")
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => fileInBetween
-                sheet.sheet_pr.tab_color = "cd3700"
-              elsif x['url'].to_s.include? "preview"
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => acceptableFile
-              elsif x['url'].to_s.include? "assessment_questions"
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
-              else
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => acceptableFile
+              files.each do |susp|
+                if x['url'].to_s.include?(susp[:id].to_s)
+                  fileFound = true
+                  sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], susp[:name].to_s], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => fileInBetween
+                  sheet.sheet_pr.tab_color = "cd3700"
+                end
+                break if x['url'].to_s.include?(susp[:id].to_s)
               end
+              unless fileFound
+                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
+              end
+
             # access submission for A before starting B
             elsif x['url'].to_s.include?("quizzes")
               hasBonus = false
@@ -235,18 +279,18 @@ students.each do |student|
               end
               # Bonus tests are acceptable
               if hasBonus || x['url'].to_s.include?(q['id'].to_s)
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
+                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
               else
-                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
+                sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
                 sheet.sheet_pr.tab_color = "cd3700"
               end
+
             # regular case
             else
-              sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], "filename"], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
+              sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
             end
           end
-          # add new line after each quiz results
-          #sheet.add_row ["", "", "", "", "", "", "", "", "", "", ""], :style => separation
+
           ipArray.clear
           browsArray.clear
         end
@@ -260,17 +304,18 @@ students.each do |student|
           sheet.name = currstudent
         end
 
+        sheet.column_info[4].hidden = true
         sheet.column_info[5].hidden = true
         sheet.column_info[6].hidden = true
         sheet.column_info[7].hidden = true
         sheet.column_info[8].hidden = true
-        sheet.column_info[9].hidden = true
+        #sheet.column_info[9].hidden = true # filename column
         # sheet.sheet_pr.tab_color = "cd3700" # if suspicious activity found in the sheet (red activity)
         # Print to console
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/color5.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/color66.xlsx')
         j = j + 1
       else
         # Print to console
