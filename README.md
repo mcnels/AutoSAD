@@ -23,18 +23,18 @@ by pulling students' page views activity during the period of a test is being ta
             * Reading Assignment
                 * *files*
             * SAFMEDS (optional)
-                *files*
+                * *files*
             * Study Guide
-                *files*
+                * *files*
         * ...
         * Instructor Materials
             * Instructor A
-                *files*
+                * *files*
             * Instructor B
-                *files*
+                * *files*
             * ...
             * Instructor Z
-                *files*
+                * *files*
 
 # Usage
  - RubyMine:
@@ -47,10 +47,11 @@ by pulling students' page views activity during the period of a test is being ta
         chmod 755 program.rb    
         ./program.rb [course_id] [check_start_time]
  
-# FEATURES
+# Features
 
-- Creates a workbook for course
-- Creates a worksheet for each student in course
-- Displays page views activity (URL accessed, time accessed, test taken, IP used, Browser used, test start time, submission time) for all tests taken in check period
+- Creates a workbook of student activity within a course
+    - Creates a worksheet for each student in course
+        - Displays page views activity (URL accessed, time accessed, test taken, IP used, Browser used, test start time, submission time) for all tests taken in check period
 - Highlights files accessed during test period in yellow
-- Highlights worksheet tab name if any suspicious activity contained there
+- Highlights worksheet if any suspicious activity is present
+    - Activity while taking unit test, review files or prior test
