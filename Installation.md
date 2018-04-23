@@ -32,14 +32,14 @@
     Ref: http://devadraco.blogspot.com/2016/08/running-wpscan-on-cygwin.html 
     Note: replace 'ahudson2014' with home directory username
     - Modify settings.rb located at C:\cygwin64\home\ahudson2014\.rvm\gems\ruby-2.5.0\gems\ethon-0.11.0\lib\ethon\curls\
-    `Original:
+    ```Original:
     6:    ffi_lib ['libcurl', 'libcurl.so.4']
 
     Modified:
-    6:    ffi_lib ['libcurl', 'libcurl.so.4', 'libcurl-4.dll']`
+    6:    ffi_lib ['libcurl', 'libcurl.so.4', 'libcurl-4.dll']```
     
     - Modify functions.rb located atC:\cygwin\home\ahudson2014\.gem\ruby\gems\ethon-0.9.0\lib\ethon\curls\ ~line 56 to 60 (comment the if-statement branches out)
-    `Original:
+    ```Original:
     55:        if Curl.windows?
     56:            base.ffi_lib 'ws2_32'
     57:        else
@@ -51,5 +51,5 @@
     56:#            base.ffi_lib 'ws2_32'
     57:#        else
     58:            base.ffi_lib ::FFI::Library::LIBC
-    59:#        end`
+    59:#        end```
 
