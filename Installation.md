@@ -36,7 +36,8 @@
     6:    ffi_lib ['libcurl', 'libcurl.so.4']
 
     Modified:
-    6:    ffi_lib ['libcurl', 'libcurl.so.4', 'libcurl-4.dll']```
+    6:    ffi_lib ['libcurl', 'libcurl.so.4', 'libcurl-4.dll']
+    ```
     
     - Modify functions.rb located atC:\cygwin\home\ahudson2014\.gem\ruby\gems\ethon-0.9.0\lib\ethon\curls\ ~line 56 to 60 (comment the if-statement branches out)
     ```Original:
