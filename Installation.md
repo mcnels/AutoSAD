@@ -9,26 +9,36 @@
     - GnuPG, autoconf, automake, git, make, m4, curl, libcurl, openssl, openssh, patch, cygwin32-readline, sqlite3, bison, libtool, lib-readline
 
 3. Install RVM
-    - rvm install 2.5.0 (using git and curl)
+    ```
+    gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+    \curl -sSL https://get.rvm.io -o rvm.sh
+    source ~/.rvm/scripts/rvm
+    ```
 
-4. Set default environment
+4. Set default environment (optional)
 
 5. Install Ruby 2.5.0 using RVM
-    - rvm install 2.5.0
+    ```
+    rvm install 2.5.0
+    ```
 
 6. Install Gems
-    - axlsx
-    - canvas-api
-    - json
+    
+    ```
+    gem install axlsx
+    gem install canvas-api
+    gem install json
+    ```
 
 7. Replace canvas-api by edited canvas-api
-  Path: C/cygwin/user/.rvm
+  
+  Path: C:\cygwin64\home\user\.rvm\gems\ruby-2.5.0\gems\canvas-api-1.1.1
 
 8. Edit sheet_pr.rb from axlsx to get tab_color option
 
     Note: replace 'ahudson2014' with home directory username and replace 'lkangas' with home directory username
   - Path (mac): /Users/lkangas/.rbenv/versions/2.5.0/lib/ruby/gems/2.5.0/gems/axlsx-2.0.1/lib/axlsx/workbook/worksheet
-  - Path (Win): C:\cygwin64\home\ahudson2014\.rvm\gems\ruby-2.5.0\axlsx-2.0.1\lib\axlsx\workbook\worksheet
+  - Path (Win): C:\cygwin64\home\ahudson2014/.rvm\gems\ruby-2.5.0\gems\axlsx-2.0.1\lib\axlsx\workbook\worksheet
   
   Link to modification: https://github.com/randym/axlsx/pull/396/files
   
