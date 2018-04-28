@@ -15,7 +15,7 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.parse("2018-03-23T00:00:00-00:00")
+end_time = DateTime.parse("2018-04-26T00:00:00-00:00") # careful when setting this as there might be a difference because of the timezones (3 am instead of midnight)
 #end_time = DateTime.now
 
 # Use bearer token
@@ -69,7 +69,7 @@ folders.each do |fol|
   end
   sub.each do |sub|
     # save needed sub folders in subf array
-    if sub['name'] == "PPT" || sub['name'] == "Reading Assignment" || sub['name'] == "SAFMEDS" || sub['name'] == "StudyGuide" || sub['full_name'].include?("Instructor Materials")
+    if sub['name'] == "PPT" || sub['name'] == "ReadingAssignment" || sub['name'] == "SAFMEDS" || sub['name'] == "StudyGuide" || sub['full_name'].include?("Instructor Materials")
       subf.push(sub['id'])
     end
   end
@@ -93,16 +93,16 @@ count = 0 # count of students
 #For each student in the course, do this...
 students.each do |student|
   next if student['sortable_name'].to_s == conflict #go to next student
-  next if student['id'].to_s == "754859" # Skip Eric ... include other staff members here in an OR clause
+  next if student['id'].to_s == "754859" || student['id'].to_s == "1848148" || student['id'].to_s == "1588479" || student['id'].to_s == "756103" || student['id'].to_s == "43149"# Skip Eric, Josh, McNels, Karsing, Cindy ... include other staff members here in an OR clause
 
   # if student's name is an empty string// student is the Test student//add transfers and withdrawals manually for now temporary solution
-  if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' || student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953'
+  if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1859088' || student['id'].to_s == '1859270' || student['id'].to_s == '1863490' || student['id'].to_s == '1860580' || student['id'].to_s == '1863550' || student['id'].to_s == '1861732'
     skipped.push(student['id'])
   end
   next if student['sortable_name'].to_s == "Student, Test"
   # Account for pending, withdraws, and other weird cases
-  next if student['id'].to_s == '1856840' || student['id'].to_s == '1856732' || student['id'].to_s == '1857392' || student['id'].to_s == '1856104' #id of test student
-  next if student['id'].to_s == '1857696' || student['id'].to_s == '1856206' || student['id'].to_s == '1849586' || student['id'].to_s == '1023182' || student['id'].to_s == '777953' #pending students
+  next if student['id'].to_s == '1863490' || student['id'].to_s == '1859088' || student['id'].to_s == '1863550' #id of test student
+  next if student['id'].to_s == '1861732' || student['id'].to_s == '1859270' || student['id'].to_s == '1860580' || student['id'].to_s == '1859118' || student['id'].to_s == '1863088' || student['id'].to_s == '1849586' || student['id'].to_s == '1860334' || student['id'].to_s == '1851688'#pending students
   next if student['sortable_name'] == ""
 
   conflict = student['sortable_name'].to_s
@@ -111,7 +111,7 @@ students.each do |student|
 
   currstudent = ""
   count = count + 1
-  next if count < 283 || count > 285 # if we need to start at a specific position in the list of students
+  # next if count < 283 || count > 285 # if we need to start at a specific position in the list of students
 
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
@@ -126,7 +126,6 @@ students.each do |student|
     escape = false
 
     # Define styles
-    #acceptableFile = sheet.styles.add_style :bg_color => "66cdaa", :fg_color => "006400", :b => true
     fileInBetween = sheet.styles.add_style :bg_color => "ffec8b", :fg_color => "cd3700", :b => true
     unacceptableTest = sheet.styles.add_style :fg_color => "cd3700", :b => true
     separation = sheet.styles.add_style :bg_color => "7a1818", :fg_color => "ffffff", :b => true
@@ -177,7 +176,6 @@ students.each do |student|
 
             # Print to console
             puts currstudent+" started"
-
             stuRec[i][j] = {:stime => submission['started_at'], :sbmtime => submission['finished_at'], :unit => q['title']}
             tookTest = "Y"
             break if tookTest == "Y"
@@ -207,9 +205,6 @@ students.each do |student|
 
           # Print the page views activity for the period between the start time and the submission time
           page_views.each do |x|
-
-
-            # if x['url'].contains(id of file)
             # Skip if activity is not between 6 minutes before start time and submission time
             next if DateTime.parse(x['created_at']) < (DateTime.parse(stuRec[i][j][:stime])) || DateTime.parse(x['created_at']) > (DateTime.parse(stuRec[i][j][:sbmtime]))
 
@@ -295,27 +290,27 @@ students.each do |student|
           browsArray.clear
         end
 
-
         # rename sheet and add given name to sheetnames array
-        if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " " || currstudent.to_s.include?("?")
+        if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " " || currstudent.to_s.include?("?") || currstudent.to_s.include?("'") || currstudent.to_s.include?("/") #|| currstudent.to_s.include?("\")
           currstudent = student['id'].to_s
           sheet.name = currstudent
         else
           sheet.name = currstudent
         end
 
+        # Hide columns that are not immediately needed
         sheet.column_info[4].hidden = true
         sheet.column_info[5].hidden = true
         sheet.column_info[6].hidden = true
         sheet.column_info[7].hidden = true
         sheet.column_info[8].hidden = true
         #sheet.column_info[9].hidden = true # filename column
-        # sheet.sheet_pr.tab_color = "cd3700" # if suspicious activity found in the sheet (red activity)
+
         # Print to console
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/color66.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5011_42618.xlsx')
         j = j + 1
       else
         # Print to console
@@ -325,7 +320,6 @@ students.each do |student|
     break if escape
   end
   puts currstudent+" done"
-
   puts count
   i = i + 1
 end
