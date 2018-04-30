@@ -313,8 +313,8 @@ students.each do |student|
           browsArray.clear
         end
 
-        # rename sheet and add given name to sheetnames array
-        if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " " || currstudent.to_s.include?("?") || currstudent.to_s.include?("'") || currstudent.to_s.include?("/") #|| currstudent.to_s.include?("\")
+        # rename sheet and add given name to sheetnames array, worksheet names must be 31 characters long
+        if currstudent == '' || currstudent == "" || currstudent == ' ' || currstudent == " " || currstudent.to_s.include?("?") || currstudent.to_s.include?("'") || currstudent.to_s.include?("/") || currstudent.length > 31#|| currstudent.to_s.include?("\")
           currstudent = student['id'].to_s
           sheet.name = currstudent
         else
@@ -333,7 +333,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5012_42818.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5012_43018.xlsx')
         j = j + 1
       else
         # Print to console
