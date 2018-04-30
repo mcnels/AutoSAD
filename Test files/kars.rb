@@ -23,7 +23,15 @@ canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059
 
 # Get all students/ might need to change this and get students from sections endpoint so to get remove transfers and withdrawals
 list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
+# only gets active students (pending removed)
+# list_student = canvas.get("/api/v1/courses/" + course_id + "/search_users", {'enrollment_type[]' => 'student', 'enrollment_state[]' => 'active'})
 students = Array.new(list_student)
+
+list_pending = canvas.get("/api/v1/courses/" + course_id + "/search_users", {'enrollment_type[]' => 'student', 'enrollment_state[]' => 'invited'})
+while list_pending.more? do
+  list_pending.next_page!
+end
+pending = Array.new(list_pending)
 
 # Create workbook for student
 p = Axlsx::Package.new
@@ -49,6 +57,7 @@ bonusTests = Array.new
 folders = Array.new
 subf = Array.new
 files = Array.new
+pumpkin = Array.new
 
 list_files = canvas.get("/api/v1/courses/" + course_id + "/folders/")
 while list_files.more? do
@@ -93,16 +102,27 @@ count = 0 # count of students
 #For each student in the course, do this...
 students.each do |student|
   next if student['sortable_name'].to_s == conflict #go to next student
-  next if student['id'].to_s == "754859" || student['id'].to_s == "1848148" || student['id'].to_s == "1588479" || student['id'].to_s == "756103" || student['id'].to_s == "43149"# Skip Eric, Josh, McNels, Karsing, Cindy ... include other staff members here in an OR clause
+  next if student['id'].to_s == "754859" || student['id'].to_s == "1848148" || student['id'].to_s == "1588479" || student['id'].to_s == "756103" || student['id'].to_s == "43149" || student['id'].to_s == "820975"# Skip Eric, Josh, McNels, Karsing, Cindy ... include other staff members here in an OR clause
 
   # if student's name is an empty string// student is the Test student//add transfers and withdrawals manually for now temporary solution
-  if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1859088' || student['id'].to_s == '1859270' || student['id'].to_s == '1863490' || student['id'].to_s == '1860580' || student['id'].to_s == '1863550' || student['id'].to_s == '1861732'
+  if student['sortable_name'].to_s == "Student, Test" || student['sortable_name'] == "" || student['id'].to_s == '1861484' || student['id'].to_s == '1861096' || student['id'].to_s == '1853138' || student['id'].to_s == '1855010' || student['id'].to_s == '1854626' || student['id'].to_s == '1857372' || student['id'].to_s == '774933' || student['id'].to_s == '1855030'
     skipped.push(student['id'])
   end
   next if student['sortable_name'].to_s == "Student, Test"
   # Account for pending, withdraws, and other weird cases
+  isPending = false
+  pending.each do |pending|
+    if student['id'].to_s == pending['id'].to_s
+      isPending = true
+      skipped.push(student['id'])
+      break
+    end
+  end
+
+  next if isPending
+
   next if student['id'].to_s == '1863490' || student['id'].to_s == '1859088' || student['id'].to_s == '1863550' #id of test student
-  next if student['id'].to_s == '1861732' || student['id'].to_s == '1859270' || student['id'].to_s == '1860580' || student['id'].to_s == '1859118' || student['id'].to_s == '1863088' || student['id'].to_s == '1849586' || student['id'].to_s == '1860334' || student['id'].to_s == '1851688'#pending students
+  # next if student['id'].to_s == '1861096' || student['id'].to_s == '1861484' || student['id'].to_s == '1853138' || student['id'].to_s == '1855010' || student['id'].to_s == '1854626' || student['id'].to_s == '1857372' || student['id'].to_s == '774933' || student['id'].to_s == '1855030'#pending students
   next if student['sortable_name'] == ""
 
   conflict = student['sortable_name'].to_s
@@ -111,6 +131,7 @@ students.each do |student|
 
   currstudent = ""
   count = count + 1
+  suspicious = false
   # next if count < 283 || count > 285 # if we need to start at a specific position in the list of students
 
   # Create a worksheet for current student
@@ -256,6 +277,7 @@ students.each do |student|
                   fileFound = true
                   sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], susp[:name].to_s], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => fileInBetween
                   sheet.sheet_pr.tab_color = "cd3700"
+                  suspicious = true
                 end
                 break if x['url'].to_s.include?(susp[:id].to_s)
               end
@@ -263,7 +285,7 @@ students.each do |student|
                 sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
               end
 
-            # access submission for A before starting B
+            # access submission for A while taking B
             elsif x['url'].to_s.include?("quizzes")
               hasBonus = false
               bonusTests.each do |bonus|
@@ -278,6 +300,7 @@ students.each do |student|
               else
                 sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
                 sheet.sheet_pr.tab_color = "cd3700"
+                suspicious = true
               end
 
             # regular case
@@ -310,7 +333,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5011_42618.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/5012_42818.xlsx')
         j = j + 1
       else
         # Print to console
@@ -319,11 +342,22 @@ students.each do |student|
     end
     break if escape
   end
+
+  # Push cheaters' names to pumpkin array
+  if suspicious
+    pumpkin.push(currstudent)
+  end
+
   puts currstudent+" done"
   puts count
   i = i + 1
 end
 puts "all done"
+
+# Write cheaters' names to txt file
+File.open("5012_43018.txt", 'w+') do |f|
+  f.puts(pumpkin)
+end
 puts skipped
 # Print matrix to console
 # stuRec.each { |x|
