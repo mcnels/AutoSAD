@@ -6,7 +6,7 @@
 2. Packages for cygwin:
   Verify following packages have been installed
     - Run cygwin setup
-    - GnuPG, autoconf, automake, git, make, m4, curl, libcurl, openssl, openssh, patch, cygwin32-readline, sqlite3, bison, libtool, lib-readline
+    - GnuPG, autoconf, automake, git, make, m4, curl, libcurl, openssl, openssh, patch, cygwin32-readline, sqlite3, bison, libtool, lib-readline, ruby-devel, ruby (interpreter), mingw64, mingw64-x86, requirements_cygwin_libs_install gcc gcc-core mingw64-x86_64-gcc-core zlib-devel openssl-devel libyaml-devel libffi-devel libreadline-devel
 
 3. Install RVM
     ```
