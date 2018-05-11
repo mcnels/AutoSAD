@@ -15,6 +15,8 @@
     source ~/.rvm/scripts/rvm
     ```
 
+    https://www.digitalocean.com/community/tutorials/how-to-install-ruby-and-set-up-a-local-programming-environment-on-windows-10
+    
 4. Set default environment (optional)
 
 5. Install Ruby 2.5.0 using RVM
