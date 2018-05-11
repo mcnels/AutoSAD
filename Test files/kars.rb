@@ -15,7 +15,7 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.parse("2018-04-26T00:00:00-00:00") # careful when setting this as there might be a difference because of the timezones (3 am instead of midnight)
+end_time = DateTime.parse("2018-05-09T15:00:00-00:00") # careful when setting this as there might be a difference because of the timezones (3 am instead of midnight)
 #end_time = DateTime.now
 
 # Use bearer token
@@ -78,7 +78,7 @@ folders.each do |fol|
   end
   sub.each do |sub|
     # save needed sub folders in subf array
-    if sub['name'] == "PPT" || sub['name'] == "ReadingAssignment" || sub['name'] == "SAFMEDS" || sub['name'] == "StudyGuide" || sub['full_name'].include?("Instructor Materials")
+    if sub['name'] == "Slides" || sub['name'] == "ReadingAssignment" || sub['name'] == "SAFMEDS" || sub['name'] == "StudyGuides" || sub['full_name'].include?("Instructor Materials")
       subf.push(sub['id'])
     end
   end
@@ -132,7 +132,7 @@ students.each do |student|
   currstudent = ""
   count = count + 1
   suspicious = false
-  # next if count < 283 || count > 285 # if we need to start at a specific position in the list of students
+  #next if count < 500 #|| count > 285 # if we need to start at a specific position in the list of students
 
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
@@ -333,7 +333,7 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/5012_43018.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.xlsx')
         j = j + 1
       else
         # Print to console
@@ -355,10 +355,12 @@ end
 puts "all done"
 
 # Write cheaters' names to txt file
-File.open("5012_43018.txt", 'w+') do |f|
+File.open("/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.txt", 'w+') do |f|
   f.puts(pumpkin)
 end
 puts skipped
+puts "Pumpkin"
+puts pumpkin
 # Print matrix to console
 # stuRec.each { |x|
 #   puts x.join(" ")
