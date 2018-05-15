@@ -40,12 +40,12 @@ by pulling students' page views activity during the period of a test is being ta
  - RubyMine:
  
     * Go to Run -> Edit Configurations
-    * Add [course_id] [check_start_time]
+    * Add [course_id] [check_start_time] [check_end_time]
     * Run
  - Command Line:
     
         chmod 755 program.rb    
-        ./program.rb [course_id] [check_start_time]
+        ./program.rb [course_id] [check_start_time] [check_end_time]
  
 # Features
 
