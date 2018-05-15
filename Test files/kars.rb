@@ -15,7 +15,9 @@ end
 course_id = ARGV[0]
 # start and end time for check period
 period_start = ARGV[1]
-end_time = DateTime.parse("2018-05-09T15:00:00-00:00") # careful when setting this as there might be a difference because of the timezones (3 am instead of midnight)
+end_time_str = ARGV[2]
+end_time = DateTime.parse(end_time_str)
+#end_time = DateTime.parse("2018-05-09T15:00:00-00:00") # careful when setting this as there might be a difference because of the timezones (3 am instead of midnight)
 #end_time = DateTime.now
 
 # Use bearer token
@@ -26,6 +28,12 @@ list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
 # only gets active students (pending removed)
 # list_student = canvas.get("/api/v1/courses/" + course_id + "/search_users", {'enrollment_type[]' => 'student', 'enrollment_state[]' => 'active'})
 students = Array.new(list_student)
+
+# Name output file automatically based on course id
+courseinfo = canvas.get("/api/v1/courses/" + course_id)
+testfname = courseinfo["name"]
+novet = end_time.to_s
+filenom = testfname.to_s+" "+end_time_str[0..9]
 
 list_pending = canvas.get("/api/v1/courses/" + course_id + "/search_users", {'enrollment_type[]' => 'student', 'enrollment_state[]' => 'invited'})
 while list_pending.more? do
@@ -333,7 +341,8 @@ students.each do |student|
         puts "Info for " + q['title'].to_s + " recorded"
 
         # Create the Excel document
-        p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.xlsx')
+        #p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/'+filenom+'.xlsx')
         j = j + 1
       else
         # Print to console
@@ -355,7 +364,8 @@ end
 puts "all done"
 
 # Write cheaters' names to txt file
-File.open("/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.txt", 'w+') do |f|
+# File.open("/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.txt", 'w+') do |f|
+File.open("/Users/lkangas/Documents/Tests/April2018/5011/"+filenom+".txt", 'w+') do |f|
   f.puts(pumpkin)
 end
 puts skipped
