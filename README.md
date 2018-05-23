@@ -1,4 +1,4 @@
-# AutomatedSADDChecks
+# AutoSAD
 
 This tool eases the process of checking academic dishonesty in a Canvas course,
 by pulling students' page views activity during the period of a test is being taken, for all Unit Tests and all students in said course.
