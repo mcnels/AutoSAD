@@ -7,7 +7,7 @@ require 'date'
 # Check for command line arguments
 if ARGV.length <= 0
   puts "ERROR\n"
-  puts "Usage:./page_views.rb canvas_course_id check_period_start_time"
+  puts "Usage:./page_views.rb [canvas_course_id] [check_period_start_time] [check_period_end_time]"
   exit
 end
 
@@ -140,7 +140,7 @@ students.each do |student|
   currstudent = ""
   count = count + 1
   suspicious = false
-  #next if count < 500 #|| count > 285 # if we need to start at a specific position in the list of students
+  #next if count < 50 #|| count > 285 # if we need to start at a specific position in the list of students
 
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
@@ -165,6 +165,10 @@ students.each do |student|
 
     # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
     quiz_list.each do |q|
+      # Remove false positives when student is taking Midterm survey, end of term survey, reading quiz and video code entry
+      if (q['title'].include? "make-up") || (q['title'].include? "Satisfaction") || (q['title'].include? "Entry") || (q['title'].include? "Reading")
+        bonusTests.push(q['id'].to_s)
+      end
       # Applying the filters...
       if (q['title'].include? "Test A") || (q['title'].include? "Test B")
         # Save ids of bonus tests in array for later comparison
@@ -342,11 +346,11 @@ students.each do |student|
 
         # Create the Excel document
         #p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.xlsx')
-        p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/'+filenom+'.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/April2018/5012/'+filenom+'.xlsx')
         j = j + 1
       else
         # Print to console
-        #puts "test does not fit ASC's criteria"
+        #puts "test does not fit AutoSAD's criteria"
       end
     end
     break if escape
@@ -365,7 +369,7 @@ puts "all done"
 
 # Write cheaters' names to txt file
 # File.open("/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.txt", 'w+') do |f|
-File.open("/Users/lkangas/Documents/Tests/April2018/5011/"+filenom+".txt", 'w+') do |f|
+File.open("/Users/lkangas/Documents/Tests/April2018/5012/"+filenom+".txt", 'w+') do |f|
   f.puts(pumpkin)
 end
 puts skipped
