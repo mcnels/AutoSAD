@@ -140,7 +140,7 @@ students.each do |student|
   currstudent = ""
   count = count + 1
   suspicious = false
-  #next if count < 50 #|| count > 285 # if we need to start at a specific position in the list of students
+  #next if count < 194 #|| count > 285 # if we need to start at a specific position in the list of students
 
   # Create a worksheet for current student
   p.workbook.add_worksheet do |sheet|
@@ -163,18 +163,24 @@ students.each do |student|
     # Print header row in Excel worksheet
     sheet.add_row ["URL", "Created At", "IP used", "Browser used", "Unit Test", "controller", "remote_ip", "user_agent", "participated", "file name"], :style => headers
 
+    quiz_list.each do |q|
+      # Remove false positives when student is taking Midterm survey, end of term survey, reading quiz and video code entry
+      if (q['title'].include? "make-up") || (q['title'].include? "Satisfaction") || (q['title'].include? "Entry") || (q['title'].include? "Reading") || (q['title'].include? "Bonus") || (q['title'].include? "Proctor") || (q['title'].include? "Mid-term") || (q['title'].include? "Survey")
+        bonusTests.push(q['id'].to_s)
+      end
+    end
     # Get all unit tests for course (this filters the list receives fro only the ones we want to check)
     quiz_list.each do |q|
       # Remove false positives when student is taking Midterm survey, end of term survey, reading quiz and video code entry
-      if (q['title'].include? "make-up") || (q['title'].include? "Satisfaction") || (q['title'].include? "Entry") || (q['title'].include? "Reading")
-        bonusTests.push(q['id'].to_s)
-      end
+      # if (q['title'].include? "make-up") || (q['title'].include? "Satisfaction") || (q['title'].include? "Entry") || (q['title'].include? "Reading") || (q['title'].include? "Bonus")
+      #   bonusTests.push(q['id'].to_s)
+      # end
       # Applying the filters...
       if (q['title'].include? "Test A") || (q['title'].include? "Test B")
         # Save ids of bonus tests in array for later comparison
-        if q['title'].include? "Bonus"
-          bonusTests.push(q['id'].to_s)
-        end
+        # if q['title'].include? "Bonus"
+        #   bonusTests.push(q['id'].to_s)
+        # end
         # skip bonus and proctored tests
         next if (q['title'].include? "Bonus") || (q['title'].include? "Proctored")
         quiz_id = q['id'].to_s
@@ -307,7 +313,7 @@ students.each do |student|
                 end
               end
               # Bonus tests are acceptable
-              if hasBonus || x['url'].to_s.include?(q['id'].to_s)
+              if hasBonus || x['url'].to_s.include?(q['id'].to_s) || x['url'].to_s.include?("time")
                 sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string]
               else
                 sheet.add_row [x['url'], x['created_at'], ipArray[-1][0..5], browsArray[-1][0..8], stuRec[i][j][:unit].to_s, x['controller'], x['remote_ip'], x['user_agent'], x['participated'], ""], :types => [nil, :string, :string, nil, nil, :string, :string, :string, :string, :string, :string], :style => unacceptableTest
@@ -346,7 +352,7 @@ students.each do |student|
 
         # Create the Excel document
         #p.serialize('/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.xlsx')
-        p.serialize('/Users/lkangas/Documents/Tests/April2018/5012/'+filenom+'.xlsx')
+        p.serialize('/Users/lkangas/Documents/Tests/April2018/'+filenom+'.xlsx')
         j = j + 1
       else
         # Print to console
@@ -369,12 +375,14 @@ puts "all done"
 
 # Write cheaters' names to txt file
 # File.open("/Users/lkangas/Documents/Tests/April2018/5011/5011_5918r.txt", 'w+') do |f|
-File.open("/Users/lkangas/Documents/Tests/April2018/5012/"+filenom+".txt", 'w+') do |f|
+File.open("/Users/lkangas/Documents/Tests/April2018/"+filenom+".txt", 'w+') do |f|
   f.puts(pumpkin)
 end
 puts skipped
 puts "Pumpkin"
 puts pumpkin
+puts "bonusTests"
+puts bonusTests
 # Print matrix to console
 # stuRec.each { |x|
 #   puts x.join(" ")
