@@ -6,7 +6,7 @@ by pulling students' page views activity during the period of a test is being ta
 # Requirements
 
 - Ruby 2.5.0
-- canvas-api gem (using modified canvas-api.rb file)
+- canvas-api gem from @whitmer (using modified canvas-api.rb file)
 - axlsx gem (using modified sheet_pr.rb file)
 - json gem
 - date gem
