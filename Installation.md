@@ -38,16 +38,16 @@
 
 8. Edit sheet_pr.rb from axlsx to get tab_color option
 
-    Note: replace 'ahudson2014' with home directory username and replace 'lkangas' with home directory username
-  - Path (mac): /Users/lkangas/.rbenv/versions/2.5.0/lib/ruby/gems/2.5.0/gems/axlsx-2.0.1/lib/axlsx/workbook/worksheet
-  - Path (Win): C:\cygwin64\home\ahudson2014/.rvm\gems\ruby-2.5.0\gems\axlsx-2.0.1\lib\axlsx\workbook\worksheet
+    Note: replace 'userX' with home directory username and replace 'lkangas' with home directory username
+  - Path (mac): /Users/userX/.rbenv/versions/2.5.0/lib/ruby/gems/2.5.0/gems/axlsx-2.0.1/lib/axlsx/workbook/worksheet
+  - Path (Win): C:\cygwin64\home\userX/.rvm\gems\ruby-2.5.0\gems\axlsx-2.0.1\lib\axlsx\workbook\worksheet
   
   Link to modification: https://github.com/randym/axlsx/pull/396/files
   
 9. Take care of curl and libcurl issues
     Ref: http://devadraco.blogspot.com/2016/08/running-wpscan-on-cygwin.html 
-    Note: replace 'ahudson2014' with home directory username
-    - Modify settings.rb located at C:\cygwin64\home\ahudson2014\.rvm\gems\ruby-2.5.0\gems\ethon-0.11.0\lib\ethon\curls\
+    Note: replace 'userX' with home directory username
+    - Modify settings.rb located at C:\cygwin64\home\userX\.rvm\gems\ruby-2.5.0\gems\ethon-0.11.0\lib\ethon\curls\
     ```Original:
     6:    ffi_lib ['libcurl', 'libcurl.so.4']
 
