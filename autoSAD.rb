@@ -21,7 +21,7 @@ end_time = DateTime.parse(end_time_str)
 #end_time = DateTime.now
 
 # Use bearer token
-canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "1059~YUDPosfOLaWfQf4XVAsPavyXFYNjGnRHzqSbQuwFs6eQDANaeShDaGPVEDufVAEj")
+canvas = Canvas::API.new(:host => "https://fit.instructure.com", :token => "TOKEN GOES HERE")
 
 # Get all students/ might need to change this and get students from sections endpoint so to get remove transfers and withdrawals
 list_student = canvas.get("/api/v1/courses/" + course_id + "/students")
